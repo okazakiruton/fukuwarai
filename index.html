@@ -250,6 +250,14 @@
     padding-top:10px;
   }
   .gallery .empty{font-size:12px;color:#998;padding:8px 0;}
+  .lib-row{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+    padding-top:10px;
+    border-top:1px dashed var(--paper-dim);
+  }
+  .lib-row .icon-btn{flex:1;}
   .thumb{
     position:relative;
     width:56px;height:70px;
@@ -272,6 +280,20 @@
     line-height:1;
     cursor:pointer;
   }
+  .thumb .toggle-use{
+    position:absolute;
+    bottom:1px;left:1px;
+    width:18px;height:18px;
+    background:rgba(42,33,24,0.75);
+    color:#fff;
+    border:none;
+    border-radius:50%;
+    font-size:10px;
+    line-height:1;
+    cursor:pointer;
+  }
+  .thumb.disabled-part img{opacity:.35;filter:grayscale(100%);}
+  .thumb.disabled-part{border-color:#cabfa4;}
   .result-canvas-wrap{
     width:100%;
     max-width:400px;
@@ -400,6 +422,13 @@
     <div class="status" id="drawStatusMsg"></div>
 
     <div class="gallery" id="gallery"></div>
+
+    <div class="lib-row">
+      <button class="icon-btn" id="exportBtn">📤 パーツを書き出す</button>
+      <button class="icon-btn" id="importBtn">📥 パーツを読み込む</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+    <div class="status" id="libStatusMsg"></div>
   </div>
 
   <!-- 右パネル：結果 -->
@@ -437,6 +466,7 @@ const GAME_URL = 'https://okazakiruton.github.io/fukuwarai/';
 
 const CATEGORIES = [
   { key:'hair',     label:'髪',    guide:{left:5,  top:0,  width:390, height:440, radius:'50%'} },
+  { key:'ear',      label:'耳',    guide:{left:0,  top:220,width:400, height:100, radius:'20%'} },
   { key:'contour',  label:'輪郭',  guide:{left:40, top:30, width:320, height:420, radius:'50%'} },
   { key:'eyebrow',  label:'眉毛',  guide:{left:70, top:165, width:260, height:35, radius:'40%'} },
   { key:'eye',      label:'目',    guide:{left:90, top:205, width:220, height:55, radius:'40%'} },
@@ -621,7 +651,7 @@ function showDrawStatus(msg){
 
 function loadCandidateForEdit(idx){
   editingIndex = idx;
-  const url = candidates[currentCategory][idx];
+  const url = candidates[currentCategory][idx].url;
   const img = new Image();
   img.onload = () => {
     clearCanvas();
@@ -770,11 +800,11 @@ document.getElementById('saveCandidateBtn').addEventListener('click', () => {
   }
   const dataUrl = drawCanvas.toDataURL('image/png');
   if(editingIndex !== null){
-    candidates[currentCategory][editingIndex] = dataUrl;
+    candidates[currentCategory][editingIndex].url = dataUrl;
     editingIndex = null;
     showDrawStatus('修正を保存しました！');
   } else {
-    candidates[currentCategory].push(dataUrl);
+    candidates[currentCategory].push({ url: dataUrl, enabled: true });
     showDrawStatus('保存しました！');
   }
   clearCanvas();
@@ -807,14 +837,17 @@ function renderGallery(){
     galleryEl.appendChild(empty);
     return;
   }
-  list.forEach((url, idx) => {
+  list.forEach((item, idx) => {
     const thumb = document.createElement('div');
-    thumb.className = 'thumb' + (idx === editingIndex ? ' editing' : '');
+    thumb.className = 'thumb'
+      + (idx === editingIndex ? ' editing' : '')
+      + (item.enabled ? '' : ' disabled-part');
     const img = document.createElement('img');
-    img.src = url;
+    img.src = item.url;
     img.title = 'クリックして修正';
     img.addEventListener('click', () => loadCandidateForEdit(idx));
     thumb.appendChild(img);
+
     const del = document.createElement('button');
     del.className = 'del';
     del.textContent = '×';
@@ -834,6 +867,20 @@ function renderGallery(){
       renderPerDiceButtons();
     });
     thumb.appendChild(del);
+
+    const toggle = document.createElement('button');
+    toggle.className = 'toggle-use';
+    toggle.textContent = item.enabled ? '👁' : '🚫';
+    toggle.title = item.enabled ? '使用する（クリックで使用しないに切替）' : '使用しない（クリックで使用するに切替）';
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      item.enabled = !item.enabled;
+      renderGallery();
+      renderChecklist();
+      renderPerDiceButtons();
+    });
+    thumb.appendChild(toggle);
+
     galleryEl.appendChild(thumb);
   });
 }
@@ -844,7 +891,7 @@ function renderChecklist(){
   checklistEl.innerHTML = '';
   CATEGORIES.forEach(c => {
     const span = document.createElement('span');
-    const n = candidates[c.key].length;
+    const n = candidates[c.key].filter(item => item.enabled).length;
     span.textContent = c.label + (n>0 ? `✓${n}` : '−');
     if(n>0) span.className = 'ready';
     checklistEl.appendChild(span);
@@ -867,35 +914,35 @@ function renderPerDiceButtons(){
     const btn = document.createElement('button');
     btn.className = 'per-dice-btn' + (resultState[c.key] ? ' filled' : '');
     btn.textContent = '🎲 ' + c.label;
-    btn.disabled = candidates[c.key].length === 0;
+    btn.disabled = candidates[c.key].filter(item => item.enabled).length === 0;
     btn.addEventListener('click', () => rollCategory(c.key));
     perDiceRow.appendChild(btn);
   });
 }
 
 function rollCategory(key){
-  const list = candidates[key];
+  const list = candidates[key].filter(item => item.enabled);
   const label = CATEGORIES.find(c => c.key === key).label;
   if(list.length === 0){
-    updateStatus('「' + label + '」のパーツがまだありません。');
+    updateStatus('「' + label + '」の使用可能なパーツがありません。');
     return;
   }
   updateStatus('');
-  resultState[key] = list[Math.floor(Math.random() * list.length)];
+  resultState[key] = list[Math.floor(Math.random() * list.length)].url;
   renderPerDiceButtons();
   renderResult();
 }
 
 function rollAll(){
-  const missing = CATEGORIES.filter(c => candidates[c.key].length === 0).map(c => c.label);
+  const missing = CATEGORIES.filter(c => candidates[c.key].filter(item => item.enabled).length === 0).map(c => c.label);
   if(missing.length > 0){
-    updateStatus('先に描いてください：' + missing.join('・'));
+    updateStatus('先に描いてください（または使用可能にしてください）：' + missing.join('・'));
     return;
   }
   updateStatus('');
   CATEGORIES.forEach(c => {
-    const list = candidates[c.key];
-    resultState[c.key] = list[Math.floor(Math.random() * list.length)];
+    const list = candidates[c.key].filter(item => item.enabled);
+    resultState[c.key] = list[Math.floor(Math.random() * list.length)].url;
   });
   renderPerDiceButtons();
   renderResult();
@@ -980,6 +1027,79 @@ shareXBtn.addEventListener('click', () => {
     }
   }, 'image/png');
 });
+
+// --- パーツの書き出し／読み込み（自分のバックアップ、他の人との受け渡し両方に使える） ---
+const libStatusEl = document.getElementById('libStatusMsg');
+function showLibStatus(msg){
+  libStatusEl.textContent = msg;
+}
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const totalCount = CATEGORIES.reduce((sum, c) => sum + candidates[c.key].length, 0);
+  if(totalCount === 0){
+    showLibStatus('書き出せるパーツがまだありません。');
+    return;
+  }
+  const payload = { version: 1, categories: {} };
+  CATEGORIES.forEach(c => {
+    payload.categories[c.key] = candidates[c.key];
+  });
+  const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  const link = document.createElement('a');
+  link.download = 'fukuwarai_parts_' + Date.now() + '.json';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  URL.revokeObjectURL(link.href);
+  showLibStatus('パーツを書き出しました。このファイルを他の人に渡せば、その人の作ったパーツも読み込んで一緒に遊べます。');
+});
+
+const importFileInput = document.getElementById('importFile');
+document.getElementById('importBtn').addEventListener('click', () => {
+  importFileInput.value = '';
+  importFileInput.click();
+});
+
+importFileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try{
+      data = JSON.parse(reader.result);
+    }catch(err){
+      showLibStatus('読み込みに失敗しました。パーツのファイル（.json）を選んでください。');
+      return;
+    }
+    if(!data || typeof data.categories !== 'object'){
+      showLibStatus('このファイルはパーツデータとして認識できませんでした。');
+      return;
+    }
+    let importedCount = 0;
+    CATEGORIES.forEach(c => {
+      const incoming = data.categories[c.key];
+      if(!Array.isArray(incoming)) return;
+      incoming.forEach(entry => {
+        const url = typeof entry === 'string' ? entry : entry && entry.url;
+        if(typeof url !== 'string' || !url.startsWith('data:image')) return;
+        const enabled = typeof entry === 'object' && entry !== null && 'enabled' in entry ? !!entry.enabled : true;
+        candidates[c.key].push({ url, enabled });
+        importedCount++;
+      });
+    });
+    if(importedCount === 0){
+      showLibStatus('読み込めるパーツが見つかりませんでした。');
+      return;
+    }
+    renderTabs();
+    renderGallery();
+    renderChecklist();
+    renderPerDiceButtons();
+    showLibStatus(importedCount + '個のパーツを読み込みました！既存のパーツに追加されています。');
+  };
+  reader.readAsText(file);
+});
+
 
 // --- 初期化 ---
 renderTabs();
