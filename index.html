@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>福笑いメーカー</title>
+<meta property="og:title" content="福笑いメーカー">
+<meta property="og:description" content="パーツを描いて、サイコロで組み合わせよう">
+<meta property="og:url" content="https://okazakiruton.github.io/fukuwarai/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -428,6 +433,7 @@
 
 <script>
 const W = 400, H = 500;
+const GAME_URL = 'https://okazakiruton.github.io/fukuwarai/';
 
 const CATEGORIES = [
   { key:'hair',     label:'髪',    guide:{left:5,  top:0,  width:390, height:440, radius:'50%'} },
@@ -966,7 +972,7 @@ shareXBtn.addEventListener('click', () => {
       await navigator.share({
         files: [file],
         text: '福笑いメーカーで遊んだよ　#fukuwarai',
-        url: window.location.href
+        url: GAME_URL
       });
     }catch(err){
       if(err.name !== 'AbortError'){
