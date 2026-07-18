@@ -971,8 +971,7 @@ shareXBtn.addEventListener('click', () => {
     try{
       await navigator.share({
         files: [file],
-        text: '福笑いメーカーで遊んだよ　#fukuwarai',
-        url: GAME_URL
+        text: '福笑いメーカーで遊んだよ　#fukuwarai　' + GAME_URL
       });
     }catch(err){
       if(err.name !== 'AbortError'){
