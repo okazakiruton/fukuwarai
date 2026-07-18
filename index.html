@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>福笑いメーカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --indigo-deep:#101d38;
+    --indigo:#1b2b52;
+    --indigo-light:#2c4270;
+    --vermilion:#e0562f;
+    --gold:#d3a53f;
+    --paper:#faf5e8;
+    --paper-dim:#efe6d2;
+    --ink:#2a2118;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{touch-action:manipulation;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 8px 8px, rgba(211,165,63,0.08) 2px, transparent 2px) 0 0/32px 32px,
+      linear-gradient(160deg, var(--indigo-deep), var(--indigo) 55%, var(--indigo-light));
+    font-family:"Noto Sans JP", sans-serif;
+    color:var(--paper);
+    padding:28px 16px 60px;
+  }
+  h1{
+    font-family:"Shippori Mincho", serif;
+    font-weight:700;
+    text-align:center;
+    font-size:clamp(28px,5vw,42px);
+    margin:0 0 4px;
+    letter-spacing:.08em;
+    color:var(--paper);
+    text-shadow:0 2px 0 rgba(0,0,0,0.25);
+  }
+  .subtitle{
+    text-align:center;
+    color:var(--gold);
+    font-size:14px;
+    letter-spacing:.15em;
+    margin-bottom:32px;
+  }
+  @media (max-width:480px){
+    .tab{padding:10px 6px;font-size:13px;}
+    .icon-btn{padding:9px 10px;}
+    .per-dice-btn{padding:10px 6px;}
+    .btn{padding:13px 14px;}
+    .guide-controls input[type=range]{width:58px;}
+  }
+  .layout{
+    max-width:1040px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+  }
+  @media (max-width:860px){
+    .layout{grid-template-columns:1fr;}
+  }
+  .panel{
+    background:var(--paper);
+    border-radius:6px;
+    padding:20px;
+    color:var(--ink);
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    position:relative;
+  }
+  .panel::before{
+    content:"";
+    position:absolute;
+    inset:6px;
+    border:1px solid rgba(211,165,63,0.5);
+    border-radius:3px;
+    pointer-events:none;
+  }
+  .panel h2{
+    font-family:"Shippori Mincho", serif;
+    margin:0 0 14px;
+    font-size:20px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .panel h2 .num{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:24px;height:24px;
+    background:var(--vermilion);
+    color:#fff;
+    border-radius:50%;
+    font-size:13px;
+    font-family:"Noto Sans JP", sans-serif;
+  }
+  .tabs{
+    display:flex;
+    gap:6px;
+    margin-bottom:12px;
+    flex-wrap:wrap;
+  }
+  .tab{
+    flex:1 1 auto;
+    min-width:64px;
+    border:1px solid var(--paper-dim);
+    background:#fff;
+    border-radius:999px;
+    padding:8px 6px;
+    font-size:13px;
+    font-family:"Noto Sans JP", sans-serif;
+    cursor:pointer;
+    position:relative;
+    transition:all .15s ease;
+    color:var(--ink);
+  }
+  .tab.active{
+    background:var(--vermilion);
+    border-color:var(--vermilion);
+    color:#fff;
+    font-weight:700;
+  }
+  .tab .badge{
+    position:absolute;
+    top:-6px; right:-4px;
+    background:var(--gold);
+    color:#2a2118;
+    font-size:10px;
+    min-width:16px;
+    height:16px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 3px;
+    font-weight:700;
+  }
+  .toolbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+    font-size:13px;
+  }
+  .swatches{display:flex;gap:5px;}
+  .swatch{
+    width:20px;height:20px;
+    border-radius:50%;
+    border:2px solid #fff;
+    outline:1px solid #ccc;
+    cursor:pointer;
+  }
+  .swatch.active{outline:2px solid var(--vermilion);}
+  input[type=range]{width:80px;}
+  .icon-btn{
+    border:1px solid var(--paper-dim);
+    background:#fff;
+    border-radius:6px;
+    padding:6px 10px;
+    cursor:pointer;
+    font-size:13px;
+    color:var(--ink);
+  }
+  .icon-btn.on{background:var(--indigo);color:#fff;border-color:var(--indigo);}
+  .guide-controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px 14px;
+    align-items:center;
+    background:#fff;
+    border:1px solid var(--paper-dim);
+    border-radius:6px;
+    padding:8px 10px;
+    margin-bottom:10px;
+    font-size:11px;
+    color:#6b6151;
+  }
+  .guide-controls label{
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .guide-controls input[type=range]{width:70px;}
+  .guide-controls button{
+    margin-left:auto;
+    border:1px solid var(--paper-dim);
+    background:var(--paper-dim);
+    border-radius:5px;
+    padding:4px 8px;
+    font-size:11px;
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .canvas-wrap{
+    position:relative;
+    width:100%;
+    max-width:400px;
+    aspect-ratio:4/5;
+    margin:0 auto 12px;
+    background:repeating-conic-gradient(#f4f0e4 0% 25%, #ece5d2 0% 50%) 0 0/20px 20px;
+    border:1px solid var(--paper-dim);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .guide{
+    position:absolute;
+    border:2px dashed rgba(224,86,47,0.45);
+    pointer-events:none;
+  }
+  canvas{
+    position:absolute;
+    top:0;left:0;
+    width:100%;height:100%;
+    touch-action:none;
+    cursor:crosshair;
+  }
+  .save-row{display:flex;gap:8px;margin-bottom:14px;}
+  .btn{
+    flex:1;
+    border:none;
+    border-radius:6px;
+    padding:11px 14px;
+    font-family:"Noto Sans JP", sans-serif;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    transition:transform .1s ease, opacity .15s ease;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-primary{background:var(--vermilion);color:#fff;}
+  .btn-gold{background:var(--gold);color:#2a2118;}
+  .btn-outline{background:#fff;border:1px solid var(--paper-dim);color:var(--ink);}
+  .gallery{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    min-height:70px;
+    border-top:1px dashed var(--paper-dim);
+    padding-top:10px;
+  }
+  .gallery .empty{font-size:12px;color:#998;padding:8px 0;}
+  .thumb{
+    position:relative;
+    width:56px;height:70px;
+    background:repeating-conic-gradient(#f4f0e4 0% 25%, #ece5d2 0% 50%) 0 0/12px 12px;
+    border:1px solid var(--paper-dim);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .thumb img{width:100%;height:100%;object-fit:contain;cursor:pointer;}
+  .thumb.editing{border-color:var(--vermilion);border-width:2px;}
+  .thumb .del{
+    position:absolute;
+    top:1px;right:1px;
+    width:16px;height:16px;
+    background:rgba(42,33,24,0.75);
+    color:#fff;
+    border:none;
+    border-radius:50%;
+    font-size:10px;
+    line-height:1;
+    cursor:pointer;
+  }
+  .result-canvas-wrap{
+    width:100%;
+    max-width:400px;
+    aspect-ratio:4/5;
+    margin:0 auto 14px;
+    background:#fffdf7;
+    border:1px solid var(--paper-dim);
+    border-radius:4px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .result-canvas-wrap canvas{position:static;width:100%;height:100%;}
+  .placeholder{
+    color:#b3a88f;
+    font-size:13px;
+    text-align:center;
+    padding:20px;
+    font-family:"Shippori Mincho", serif;
+  }
+  .status{
+    font-size:12px;
+    color:var(--vermilion);
+    min-height:16px;
+    margin-bottom:8px;
+    text-align:center;
+  }
+  .per-dice-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:12px;
+  }
+  .per-dice-btn{
+    flex:1 1 auto;
+    min-width:60px;
+    border:1px solid var(--gold);
+    background:#fff;
+    color:var(--ink);
+    border-radius:999px;
+    padding:7px 6px;
+    font-size:12px;
+    font-family:"Noto Sans JP", sans-serif;
+    cursor:pointer;
+    transition:transform .1s ease, background .15s ease;
+  }
+  .per-dice-btn:active{transform:scale(0.95);}
+  .per-dice-btn:disabled{
+    opacity:.35;
+    cursor:not-allowed;
+    border-color:var(--paper-dim);
+  }
+  .per-dice-btn.filled{
+    background:var(--gold);
+    border-color:var(--gold);
+    font-weight:700;
+  }
+  .divider-label{
+    font-size:11px;
+    color:#9c8f74;
+    text-align:center;
+    margin:2px 0 10px;
+    position:relative;
+  }
+  .divider-label::before, .divider-label::after{
+    content:"";
+    position:absolute;
+    top:50%;
+    width:38%;
+    height:1px;
+    background:var(--paper-dim);
+  }
+  .divider-label::before{left:0;}
+  .divider-label::after{right:0;}
+  .dice-row{display:flex;gap:8px;}
+  .checklist{
+    display:flex;
+    justify-content:space-between;
+    font-size:11px;
+    color:#8a7d63;
+    margin-bottom:10px;
+  }
+  .checklist span.ready{color:var(--vermilion);font-weight:700;}
+</style>
+</head>
+<body>
+
+<h1>福笑いメーカー</h1>
+<div class="subtitle">パーツを描いて、サイコロで組み合わせよう</div>
+
+<div class="layout">
+
+  <!-- 左パネル：描画 -->
+  <div class="panel">
+    <h2><span class="num">1</span>パーツを描く</h2>
+
+    <div class="tabs" id="tabs"></div>
+
+    <div class="toolbar">
+      <div class="swatches" id="swatches"></div>
+      <label>太さ <input type="range" id="sizeRange" min="2" max="24" value="6"></label>
+      <button class="icon-btn" id="bucketBtn">🪣 バケツ</button>
+      <button class="icon-btn" id="eraserBtn">消しゴム</button>
+      <button class="icon-btn" id="undoBtn">↩️ 元に戻る</button>
+      <button class="icon-btn" id="clearBtn">全削除</button>
+    </div>
+
+    <div class="guide-controls">
+      <label>幅 <input type="range" id="guideWidthRange" min="20" max="390"></label>
+      <label>高さ <input type="range" id="guideHeightRange" min="20" max="480"></label>
+      <label>横位置 <input type="range" id="guideLeftRange" min="0" max="390"></label>
+      <label>縦位置 <input type="range" id="guideTopRange" min="0" max="480"></label>
+      <button id="guideResetBtn">ガイドをリセット</button>
+    </div>
+
+    <div class="canvas-wrap">
+      <div class="guide" id="guideBox"></div>
+      <canvas id="drawCanvas" width="400" height="500"></canvas>
+    </div>
+
+    <div class="save-row">
+      <button class="btn btn-primary" id="saveCandidateBtn">✏️ このパーツを保存</button>
+      <button class="btn btn-outline" id="cancelEditBtn" style="display:none;">編集をやめる</button>
+    </div>
+    <div class="status" id="drawStatusMsg"></div>
+
+    <div class="gallery" id="gallery"></div>
+  </div>
+
+  <!-- 右パネル：結果 -->
+  <div class="panel">
+    <h2><span class="num">2</span>サイコロで完成</h2>
+
+    <div class="checklist" id="checklist"></div>
+    <div class="status" id="statusMsg"></div>
+
+    <div class="per-dice-row" id="perDiceRow"></div>
+    <div class="divider-label">または</div>
+
+    <div class="result-canvas-wrap" id="resultWrap">
+      <div class="placeholder" id="resultPlaceholder">まだ何も<br>できていません</div>
+      <canvas id="resultCanvas" width="400" height="500" style="display:none;"></canvas>
+    </div>
+
+    <div class="dice-row">
+      <button class="btn btn-gold" id="diceBtn">🎲 全部まとめて振る</button>
+      <button class="btn btn-outline" id="saveImageBtn" disabled>💾 保存</button>
+    </div>
+    <div class="save-row" id="shareRow" style="display:none;">
+      <button class="btn btn-outline" id="shareXBtn" disabled>𝕏 で共有する</button>
+    </div>
+    <div class="save-row">
+      <button class="btn btn-outline" id="resultResetBtn">🔄 完成イメージをやり直す</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const W = 400, H = 500;
+
+const CATEGORIES = [
+  { key:'hair',     label:'髪',    guide:{left:5,  top:0,  width:390, height:440, radius:'50%'} },
+  { key:'contour',  label:'輪郭',  guide:{left:40, top:30, width:320, height:420, radius:'50%'} },
+  { key:'eyebrow',  label:'眉毛',  guide:{left:70, top:165, width:260, height:35, radius:'40%'} },
+  { key:'eye',      label:'目',    guide:{left:90, top:205, width:220, height:55, radius:'40%'} },
+  { key:'nose',     label:'鼻',    guide:{left:165,top:255, width:70,  height:100,radius:'40% 40% 50% 50%'} },
+  { key:'mouth',    label:'口',    guide:{left:130,top:365, width:140, height:50, radius:'0 0 50% 50%'} },
+];
+
+const COLORS = ['#2a2118','#e0562f','#d3a53f','#3a6b4f','#2c4270','#ffffff'];
+
+let candidates = {};
+CATEGORIES.forEach(c => candidates[c.key] = []);
+
+const ORIGINAL_GUIDES = {};
+CATEGORIES.forEach(c => ORIGINAL_GUIDES[c.key] = { ...c.guide });
+
+let currentCategory = CATEGORIES[0].key;
+let currentColor = COLORS[0];
+let resultState = {};
+CATEGORIES.forEach(c => resultState[c.key] = null);
+let currentSize = 6;
+let isEraser = false;
+let isBucket = false;
+let history = [];
+let editingIndex = null;
+let drawing = false;
+let lastX = 0, lastY = 0;
+
+const drawCanvas = document.getElementById('drawCanvas');
+const ctx = drawCanvas.getContext('2d');
+const resultCanvas = document.getElementById('resultCanvas');
+const resultCtx = resultCanvas.getContext('2d');
+
+// --- タブ生成 ---
+const tabsEl = document.getElementById('tabs');
+function renderTabs(){
+  tabsEl.innerHTML = '';
+  CATEGORIES.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (c.key === currentCategory ? ' active' : '');
+    btn.textContent = c.label;
+    const count = candidates[c.key].length;
+    if(count > 0){
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = count;
+      btn.appendChild(badge);
+    }
+    btn.addEventListener('click', () => switchCategory(c.key));
+    tabsEl.appendChild(btn);
+  });
+}
+
+function switchCategory(key){
+  if(key === currentCategory) return;
+  currentCategory = key;
+  clearCanvas();
+  history = [];
+  editingIndex = null;
+  updateSaveButtonMode();
+  renderTabs();
+  renderGuide();
+  renderGallery();
+  showDrawStatus('');
+}
+
+function renderGuide(){
+  const cat = CATEGORIES.find(c => c.key === currentCategory);
+  const g = cat.guide;
+  const box = document.getElementById('guideBox');
+  box.style.left = (g.left/W*100) + '%';
+  box.style.top = (g.top/H*100) + '%';
+  box.style.width = (g.width/W*100) + '%';
+  box.style.height = (g.height/H*100) + '%';
+  box.style.borderRadius = g.radius;
+  syncGuideSliders(g);
+}
+
+function syncGuideSliders(g){
+  document.getElementById('guideWidthRange').value = g.width;
+  document.getElementById('guideHeightRange').value = g.height;
+  document.getElementById('guideLeftRange').value = g.left;
+  document.getElementById('guideTopRange').value = g.top;
+}
+
+function currentGuide(){
+  return CATEGORIES.find(c => c.key === currentCategory).guide;
+}
+
+['guideWidthRange','guideHeightRange','guideLeftRange','guideTopRange'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    const g = currentGuide();
+    g.width  = parseInt(document.getElementById('guideWidthRange').value, 10);
+    g.height = parseInt(document.getElementById('guideHeightRange').value, 10);
+    g.left   = parseInt(document.getElementById('guideLeftRange').value, 10);
+    g.top    = parseInt(document.getElementById('guideTopRange').value, 10);
+    const box = document.getElementById('guideBox');
+    box.style.left = (g.left/W*100) + '%';
+    box.style.top = (g.top/H*100) + '%';
+    box.style.width = (g.width/W*100) + '%';
+    box.style.height = (g.height/H*100) + '%';
+  });
+});
+
+document.getElementById('guideResetBtn').addEventListener('click', () => {
+  const cat = CATEGORIES.find(c => c.key === currentCategory);
+  cat.guide = { ...ORIGINAL_GUIDES[cat.key] };
+  renderGuide();
+});
+
+// --- 色スウォッチ ---
+const swatchesEl = document.getElementById('swatches');
+function renderSwatches(){
+  swatchesEl.innerHTML = '';
+  COLORS.forEach(col => {
+    const s = document.createElement('div');
+    s.className = 'swatch' + (col === currentColor && !isEraser ? ' active' : '');
+    s.style.background = col;
+    if(col === '#ffffff') s.style.outline = '1px solid #ccc';
+    s.addEventListener('click', () => {
+      currentColor = col;
+      isEraser = false;
+      document.getElementById('eraserBtn').classList.remove('on');
+      renderSwatches();
+    });
+    swatchesEl.appendChild(s);
+  });
+}
+
+document.getElementById('sizeRange').addEventListener('input', e => {
+  currentSize = parseInt(e.target.value, 10);
+});
+
+document.getElementById('eraserBtn').addEventListener('click', e => {
+  isEraser = !isEraser;
+  e.target.classList.toggle('on', isEraser);
+  if(isEraser){
+    isBucket = false;
+    document.getElementById('bucketBtn').classList.remove('on');
+  }
+  renderSwatches();
+});
+
+document.getElementById('bucketBtn').addEventListener('click', e => {
+  isBucket = !isBucket;
+  e.target.classList.toggle('on', isBucket);
+  if(isBucket){
+    isEraser = false;
+    document.getElementById('eraserBtn').classList.remove('on');
+  }
+  renderSwatches();
+});
+
+document.getElementById('undoBtn').addEventListener('click', () => {
+  undo();
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  if(isCanvasBlank()) return;
+  pushHistory();
+  clearCanvas();
+  showDrawStatus('');
+});
+
+function clearCanvas(){
+  ctx.clearRect(0,0,W,H);
+}
+
+function pushHistory(){
+  history.push(ctx.getImageData(0,0,W,H));
+  if(history.length > 30) history.shift();
+}
+
+function undo(){
+  if(history.length === 0) return;
+  const prev = history.pop();
+  ctx.putImageData(prev, 0, 0);
+}
+
+function showDrawStatus(msg){
+  document.getElementById('drawStatusMsg').textContent = msg;
+}
+
+function loadCandidateForEdit(idx){
+  editingIndex = idx;
+  const url = candidates[currentCategory][idx];
+  const img = new Image();
+  img.onload = () => {
+    clearCanvas();
+    ctx.drawImage(img, 0, 0, W, H);
+    history = [];
+  };
+  img.src = url;
+  updateSaveButtonMode();
+  renderGallery();
+  showDrawStatus('このパーツを修正しています。');
+}
+
+function updateSaveButtonMode(){
+  const saveBtn = document.getElementById('saveCandidateBtn');
+  const cancelBtn = document.getElementById('cancelEditBtn');
+  if(editingIndex !== null){
+    saveBtn.textContent = '💾 修正を保存';
+    cancelBtn.style.display = 'block';
+  } else {
+    saveBtn.textContent = '✏️ このパーツを保存';
+    cancelBtn.style.display = 'none';
+  }
+}
+
+function isCanvasBlank(){
+  const data = ctx.getImageData(0,0,W,H).data;
+  for(let i=3;i<data.length;i+=4){
+    if(data[i] !== 0) return false;
+  }
+  return true;
+}
+
+// --- 描画イベント ---
+function getPos(e){
+  const rect = drawCanvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    x: (clientX - rect.left) / rect.width * W,
+    y: (clientY - rect.top) / rect.height * H
+  };
+}
+
+function startDraw(e){
+  e.preventDefault();
+  const p = getPos(e);
+  if(isBucket){
+    pushHistory();
+    floodFill(Math.round(p.x), Math.round(p.y), currentColor);
+    return;
+  }
+  pushHistory();
+  drawing = true;
+  lastX = p.x; lastY = p.y;
+  drawDot(p.x, p.y);
+}
+function moveDraw(e){
+  if(!drawing) return;
+  e.preventDefault();
+  const p = getPos(e);
+  drawLine(lastX, lastY, p.x, p.y);
+  lastX = p.x; lastY = p.y;
+}
+function endDraw(){ drawing = false; }
+
+function drawLine(x1,y1,x2,y2){
+  ctx.globalCompositeOperation = isEraser ? 'destination-out' : 'source-over';
+  ctx.strokeStyle = currentColor;
+  ctx.lineWidth = currentSize;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x1,y1);
+  ctx.lineTo(x2,y2);
+  ctx.stroke();
+}
+function drawDot(x,y){
+  ctx.globalCompositeOperation = isEraser ? 'destination-out' : 'source-over';
+  ctx.fillStyle = currentColor;
+  ctx.beginPath();
+  ctx.arc(x,y,currentSize/2,0,Math.PI*2);
+  ctx.fill();
+}
+
+function hexToRGBA(hex){
+  const bigint = parseInt(hex.slice(1), 16);
+  return [(bigint>>16)&255, (bigint>>8)&255, bigint&255, 255];
+}
+
+function colorsMatch(a, b, tolerance){
+  return Math.abs(a[0]-b[0]) <= tolerance &&
+         Math.abs(a[1]-b[1]) <= tolerance &&
+         Math.abs(a[2]-b[2]) <= tolerance &&
+         Math.abs(a[3]-b[3]) <= tolerance;
+}
+
+function floodFill(startX, startY, fillColorHex){
+  if(startX < 0 || startX >= W || startY < 0 || startY >= H) return;
+
+  const imageData = ctx.getImageData(0, 0, W, H);
+  const data = imageData.data;
+  const tolerance = 24;
+
+  const startIdx = (startY * W + startX) * 4;
+  const startColor = [data[startIdx], data[startIdx+1], data[startIdx+2], data[startIdx+3]];
+  const fillColor = hexToRGBA(fillColorHex);
+
+  if(colorsMatch(startColor, fillColor, tolerance)) return;
+
+  const visited = new Uint8Array(W * H);
+  const stack = [[startX, startY]];
+
+  while(stack.length){
+    const [x, y] = stack.pop();
+    if(x < 0 || x >= W || y < 0 || y >= H) continue;
+    const pos = y * W + x;
+    if(visited[pos]) continue;
+    const pidx = pos * 4;
+    const pixel = [data[pidx], data[pidx+1], data[pidx+2], data[pidx+3]];
+    if(!colorsMatch(pixel, startColor, tolerance)) continue;
+
+    visited[pos] = 1;
+    data[pidx] = fillColor[0];
+    data[pidx+1] = fillColor[1];
+    data[pidx+2] = fillColor[2];
+    data[pidx+3] = fillColor[3];
+
+    stack.push([x+1, y], [x-1, y], [x, y+1], [x, y-1]);
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+}
+
+drawCanvas.addEventListener('mousedown', startDraw);
+drawCanvas.addEventListener('mousemove', moveDraw);
+window.addEventListener('mouseup', endDraw);
+drawCanvas.addEventListener('touchstart', startDraw, {passive:false});
+drawCanvas.addEventListener('touchmove', moveDraw, {passive:false});
+drawCanvas.addEventListener('touchend', endDraw);
+
+// --- 候補の保存 ---
+document.getElementById('saveCandidateBtn').addEventListener('click', () => {
+  if(isCanvasBlank()){
+    showDrawStatus('まだ何も描かれていません。');
+    return;
+  }
+  const dataUrl = drawCanvas.toDataURL('image/png');
+  if(editingIndex !== null){
+    candidates[currentCategory][editingIndex] = dataUrl;
+    editingIndex = null;
+    showDrawStatus('修正を保存しました！');
+  } else {
+    candidates[currentCategory].push(dataUrl);
+    showDrawStatus('保存しました！');
+  }
+  clearCanvas();
+  history = [];
+  updateSaveButtonMode();
+  renderTabs();
+  renderGallery();
+  renderChecklist();
+  renderPerDiceButtons();
+});
+
+document.getElementById('cancelEditBtn').addEventListener('click', () => {
+  editingIndex = null;
+  clearCanvas();
+  history = [];
+  updateSaveButtonMode();
+  renderGallery();
+  showDrawStatus('');
+});
+
+// --- ギャラリー ---
+const galleryEl = document.getElementById('gallery');
+function renderGallery(){
+  galleryEl.innerHTML = '';
+  const list = candidates[currentCategory];
+  if(list.length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = 'このパーツはまだありません。描いて保存してください。';
+    galleryEl.appendChild(empty);
+    return;
+  }
+  list.forEach((url, idx) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'thumb' + (idx === editingIndex ? ' editing' : '');
+    const img = document.createElement('img');
+    img.src = url;
+    img.title = 'クリックして修正';
+    img.addEventListener('click', () => loadCandidateForEdit(idx));
+    thumb.appendChild(img);
+    const del = document.createElement('button');
+    del.className = 'del';
+    del.textContent = '×';
+    del.addEventListener('click', () => {
+      candidates[currentCategory].splice(idx,1);
+      if(editingIndex === idx){
+        editingIndex = null;
+        clearCanvas();
+        history = [];
+        updateSaveButtonMode();
+      } else if(editingIndex !== null && idx < editingIndex){
+        editingIndex -= 1;
+      }
+      renderTabs();
+      renderGallery();
+      renderChecklist();
+      renderPerDiceButtons();
+    });
+    thumb.appendChild(del);
+    galleryEl.appendChild(thumb);
+  });
+}
+
+// --- チェックリスト ---
+const checklistEl = document.getElementById('checklist');
+function renderChecklist(){
+  checklistEl.innerHTML = '';
+  CATEGORIES.forEach(c => {
+    const span = document.createElement('span');
+    const n = candidates[c.key].length;
+    span.textContent = c.label + (n>0 ? `✓${n}` : '−');
+    if(n>0) span.className = 'ready';
+    checklistEl.appendChild(span);
+  });
+}
+
+function updateStatus(msg){
+  document.getElementById('statusMsg').textContent = msg;
+}
+
+// --- サイコロ ---
+const diceBtn = document.getElementById('diceBtn');
+const saveImageBtn = document.getElementById('saveImageBtn');
+const resultPlaceholder = document.getElementById('resultPlaceholder');
+const perDiceRow = document.getElementById('perDiceRow');
+
+function renderPerDiceButtons(){
+  perDiceRow.innerHTML = '';
+  CATEGORIES.forEach(c => {
+    const btn = document.createElement('button');
+    btn.className = 'per-dice-btn' + (resultState[c.key] ? ' filled' : '');
+    btn.textContent = '🎲 ' + c.label;
+    btn.disabled = candidates[c.key].length === 0;
+    btn.addEventListener('click', () => rollCategory(c.key));
+    perDiceRow.appendChild(btn);
+  });
+}
+
+function rollCategory(key){
+  const list = candidates[key];
+  const label = CATEGORIES.find(c => c.key === key).label;
+  if(list.length === 0){
+    updateStatus('「' + label + '」のパーツがまだありません。');
+    return;
+  }
+  updateStatus('');
+  resultState[key] = list[Math.floor(Math.random() * list.length)];
+  renderPerDiceButtons();
+  renderResult();
+}
+
+function rollAll(){
+  const missing = CATEGORIES.filter(c => candidates[c.key].length === 0).map(c => c.label);
+  if(missing.length > 0){
+    updateStatus('先に描いてください：' + missing.join('・'));
+    return;
+  }
+  updateStatus('');
+  CATEGORIES.forEach(c => {
+    const list = candidates[c.key];
+    resultState[c.key] = list[Math.floor(Math.random() * list.length)];
+  });
+  renderPerDiceButtons();
+  renderResult();
+}
+
+function renderResult(){
+  const filled = CATEGORIES.filter(c => resultState[c.key] !== null);
+  if(filled.length === 0){
+    resultPlaceholder.style.display = 'block';
+    resultCanvas.style.display = 'none';
+    saveImageBtn.disabled = true;
+    shareXBtn.disabled = true;
+    return;
+  }
+
+  const imgs = filled.map(c => {
+    const img = new Image();
+    img.src = resultState[c.key];
+    return img;
+  });
+
+  Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise(res => img.onload = res)))
+    .then(() => {
+      resultCtx.clearRect(0,0,W,H);
+      resultCtx.fillStyle = '#fffdf7';
+      resultCtx.fillRect(0,0,W,H);
+      imgs.forEach(img => resultCtx.drawImage(img, 0, 0, W, H));
+      resultPlaceholder.style.display = 'none';
+      resultCanvas.style.display = 'block';
+      saveImageBtn.disabled = false;
+      shareXBtn.disabled = false;
+    });
+}
+
+diceBtn.addEventListener('click', rollAll);
+
+document.getElementById('resultResetBtn').addEventListener('click', () => {
+  CATEGORIES.forEach(c => resultState[c.key] = null);
+  updateStatus('');
+  renderPerDiceButtons();
+  renderResult();
+});
+
+saveImageBtn.addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = 'fukuwarai_' + Date.now() + '.png';
+  link.href = resultCanvas.toDataURL('image/png');
+  link.click();
+});
+
+// --- Xへの共有（ファイル共有に対応した端末＝主にスマホのみボタン表示） ---
+const shareRow = document.getElementById('shareRow');
+const shareXBtn = document.getElementById('shareXBtn');
+
+function supportsFileShare(){
+  if(!navigator.canShare) return false;
+  try{
+    const testFile = new File(['test'], 'test.png', { type: 'image/png' });
+    return navigator.canShare({ files: [testFile] });
+  }catch(e){
+    return false;
+  }
+}
+
+if(supportsFileShare()){
+  shareRow.style.display = 'flex';
+}
+
+shareXBtn.addEventListener('click', () => {
+  resultCanvas.toBlob(async (blob) => {
+    if(!blob) return;
+    const file = new File([blob], 'fukuwarai.png', { type: 'image/png' });
+    try{
+      await navigator.share({
+        files: [file],
+        text: '福笑いメーカーで遊んだよ　#fukuwarai',
+        url: window.location.href
+      });
+    }catch(err){
+      if(err.name !== 'AbortError'){
+        updateStatus('共有に失敗しました。');
+      }
+    }
+  }, 'image/png');
+});
+
+// --- 初期化 ---
+renderTabs();
+renderSwatches();
+renderGuide();
+renderGallery();
+renderChecklist();
+renderPerDiceButtons();
+</script>
+
+</body>
+</html>
